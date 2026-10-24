@@ -1,4 +1,5 @@
 <!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DGC PMO Dashboard</title>
+<script src="https://alcdn.msauth.net/browser/4.14.1/js/msal-browser.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f1117;color:#e4e4e7;font-size:13px;padding:12px}
@@ -29,7 +30,33 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f1117;
 .rec{font-size:11px;line-height:1.3;padding-left:4px}
 .ls{font-size:9px;color:var(--m)}
 .ft{margin-top:10px;font-size:10px;color:var(--m);text-align:center}
+#login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:90vh;gap:16px}
+#login-screen .logo{font-size:48px}
+#login-screen h1{font-size:22px;font-weight:700}
+#login-screen p{color:var(--m);font-size:13px;text-align:center;max-width:400px}
+#login-screen .btn-login{background:#3b82f6;color:white;border:none;padding:12px 32px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px}
+#login-screen .btn-login:hover{background:#2563eb}
+#login-screen .error{color:#ef4444;font-size:12px;text-align:center;max-width:400px}
+#dashboard{display:none}
+#loading{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:90vh;gap:8px;color:var(--m)}
+.spinner{width:32px;height:32px;border:3px solid var(--b);border-top:3px solid var(--a);border-radius:50%;animation:spin 1s linear infinite}
+@keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
 </style></head><body>
+
+<div id="login-screen">
+  <div class="logo">🤖</div>
+  <h1>DGC PMO Agent Dashboard</h1>
+  <p>Sign in with your DGC Microsoft account to access the PMO dashboard.</p>
+  <button class="btn-login" onclick="login()">🔐 Sign in with Microsoft</button>
+  <div id="login-error" class="error"></div>
+</div>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <div>Authenticating...</div>
+</div>
+
+<div id="dashboard">
 <div class="hdr"><div class="pulse"></div><h1>🤖 DGC PMO Agent Dashboard</h1><span style="font-size:10px;color:var(--m)">— each roadmap has its own AI agent</span></div>
 <div class="sb">
 <div class="st g"><span class="l">Healthy</span><span class="v">8</span></div>
@@ -44,117 +71,186 @@ body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f1117;
 <div class="cm"><div class="m"><div class="mn">15</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">4</div><div class="ml">Done</div></div><div class="m overdue"><div class="mn">4</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf red" style="width:27%"></div></div>
 <div class="think">💭 RM22 - AI (RMAI) is critical. Tasks: 4/15 (27%). 4 overdue. 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚨 RM22 - AI is Critical — review with Phy Ekheang.</div><div class="rec">📋 Phy Ekheang has 4 overdue tasks on RMAI.</div><div class="rec">⏰ Most overdue: "Redraft data-labeling budget plan + cost" — due 2026-10-23</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card red">
+<div class="ls">Last scan: 2026-10-24T10:33</div></div><div class="card red">
 <div class="ch"><div><div class="cn">RM14 - MCS - Bayon</div><div class="cc">RMBAY · Unassigned</div></div><div class="cb red">Critical</div></div>
 <div class="cm"><div class="m"><div class="mn">3</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">1</div><div class="ml">Done</div></div><div class="m overdue"><div class="mn">2</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf red" style="width:33%"></div></div>
 <div class="think">💭 RM14 - MCS - Bayon (RMBAY) is critical. Tasks: 1/3 (33%). 2 overdue. 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚨 RM14 - MCS - Bayon is Critical — review with Unassigned.</div><div class="rec">⏰ Most overdue: "Bayon - CC feature can be started. Creat" — due 2026-10-23</div><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card red">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card red">
 <div class="ch"><div><div class="cn">RM20 - Other</div><div class="cc">RMOTH · Unassigned</div></div><div class="cb red">Critical</div></div>
 <div class="cm"><div class="m"><div class="mn">8</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">2</div><div class="ml">Done</div></div><div class="m "><div class="mn">0</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf red" style="width:25%"></div></div>
 <div class="think">💭 RM20 - Other (RMOTH) is critical. Tasks: 2/8 (25%). 7 overdue actions. 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚨 RM20 - Other is Critical — review with Unassigned.</div><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card red">
+<div class="ls">Last scan: 2026-10-24T10:33</div></div><div class="card red">
 <div class="ch"><div><div class="cn">RM03 - DGP - Verify</div><div class="cc">RMV · H.E. Chea Sereyvath</div></div><div class="cb red">Critical</div></div>
 <div class="cm"><div class="m"><div class="mn">9</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">3</div><div class="ml">Done</div></div><div class="m overdue"><div class="mn">2</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf red" style="width:33%"></div></div>
 <div class="think">💭 RM03 - DGP - Verify (RMV) is critical. Tasks: 3/9 (33%). 2 overdue. 1 overdue actions. 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚨 RM03 - DGP - Verify is Critical — review with H.E. Chea Sereyvath.</div><div class="rec">⏰ Most overdue: "Verify Report updates - Report export" — due 2026-10-23</div><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card amber">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card amber">
 <div class="ch"><div><div class="cn">RM23 - Big Data</div><div class="cc">RMDATA · H.E. Chea Sereyvath</div></div><div class="cb amber">At Risk</div></div>
 <div class="cm"><div class="m"><div class="mn">11</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">6</div><div class="ml">Done</div></div><div class="m overdue"><div class="mn">4</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf amber" style="width:55%"></div></div>
 <div class="think">💭 RM23 - Big Data (RMDATA) needs attention. Tasks: 6/11 (55%). 4 overdue. 3 gate criteria unmet.</div><div class="recs"><div class="rec">⚠️ RM23 - Big Data needs attention — 45% overdue.</div><div class="rec">📋 Man Mala has 3 overdue tasks on RMDATA.</div><div class="rec">⏰ Most overdue: "Review what Chammith has done and prepar" — due 2026-10-23</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card amber">
+<div class="ls">Last scan: 2026-10-24T10:33</div></div><div class="card amber">
 <div class="ch"><div><div class="cn">RM02 - DG SuperApp</div><div class="cc">RMSUP · H.E. Chea Sereyvath</div></div><div class="cb amber">At Risk</div></div>
 <div class="cm"><div class="m"><div class="mn">24</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">17</div><div class="ml">Done</div></div><div class="m overdue"><div class="mn">6</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf amber" style="width:71%"></div></div>
 <div class="think">💭 RM02 - DG SuperApp (RMSUP) needs attention. Tasks: 17/24 (71%). 6 overdue. 11 overdue actions. 3 gate criteria unmet.</div><div class="recs"><div class="rec">⚠️ RM02 - DG SuperApp needs attention — 29% overdue.</div><div class="rec">📋 Man Mala has 4 overdue tasks on RMSUP.</div><div class="rec">⏰ Most overdue: "Collect, Analyse and Confirmation Verify" — due 2026-10-22</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card green">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card green">
 <div class="ch"><div><div class="cn">RM13 - DG Connect</div><div class="cc">RMCON · Man Mala</div></div><div class="cb green">Healthy</div></div>
 <div class="cm"><div class="m"><div class="mn">2</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">2</div><div class="ml">Done</div></div><div class="m "><div class="mn">0</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf green" style="width:100%"></div></div>
 <div class="think">💭 RM13 - DG Connect (RMCON) is on track. Tasks: 2/2 (100%). 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card green">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card green">
 <div class="ch"><div><div class="cn">RM10 - DGC Data Center</div><div class="cc">RMDDC · KONG Delly</div></div><div class="cb green">Healthy</div></div>
 <div class="cm"><div class="m"><div class="mn">2</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">2</div><div class="ml">Done</div></div><div class="m "><div class="mn">0</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf green" style="width:100%"></div></div>
 <div class="think">💭 RM10 - DGC Data Center (RMDDC) is on track. Tasks: 2/2 (100%). 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card green">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card green">
 <div class="ch"><div><div class="cn">RM01 - DG Governance</div><div class="cc">RMDGG · Vun Vithuroath</div></div><div class="cb green">Healthy</div></div>
 <div class="cm"><div class="m"><div class="mn">4</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">3</div><div class="ml">Done</div></div><div class="m overdue"><div class="mn">1</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf green" style="width:75%"></div></div>
 <div class="think">💭 RM01 - DG Governance (RMDGG) is on track. Tasks: 3/4 (75%). 1 overdue. 3 gate criteria unmet.</div><div class="recs"><div class="rec">⏰ Most overdue: "PMO - PMO tool, after adding the backlog" — due 2026-10-19</div><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card green">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card green">
 <div class="ch"><div><div class="cn">RM08 - Digital Signature</div><div class="cc">RMDS · Vun Vithuroath</div></div><div class="cb green">Healthy</div></div>
 <div class="cm"><div class="m"><div class="mn">2</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">2</div><div class="ml">Done</div></div><div class="m "><div class="mn">0</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf green" style="width:100%"></div></div>
 <div class="think">💭 RM08 - Digital Signature (RMDS) is on track. Tasks: 2/2 (100%). 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card green">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card green">
 <div class="ch"><div><div class="cn">RM05 - Health EA</div><div class="cc">RMHEA · Vun Vithuroath</div></div><div class="cb green">Healthy</div></div>
 <div class="cm"><div class="m"><div class="mn">3</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">3</div><div class="ml">Done</div></div><div class="m "><div class="mn">0</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf green" style="width:100%"></div></div>
 <div class="think">💭 RM05 - Health EA (RMHEA) is on track. Tasks: 3/3 (100%). 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card green">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card green">
 <div class="ch"><div><div class="cn">RM11 - National Data Center</div><div class="cc">RMNDC · KONG Delly</div></div><div class="cb green">Healthy</div></div>
 <div class="cm"><div class="m"><div class="mn">2</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">2</div><div class="ml">Done</div></div><div class="m "><div class="mn">0</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf green" style="width:100%"></div></div>
 <div class="think">💭 RM11 - National Data Center (RMNDC) is on track. Tasks: 2/2 (100%). 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card green">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card green">
 <div class="ch"><div><div class="cn">RM09 - Nomsa</div><div class="cc">RMNSA · Long Nipaul</div></div><div class="cb green">Healthy</div></div>
 <div class="cm"><div class="m"><div class="mn">35</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">30</div><div class="ml">Done</div></div><div class="m overdue"><div class="mn">3</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf green" style="width:86%"></div></div>
 <div class="think">💭 RM09 - Nomsa (RMNSA) is on track. Tasks: 30/35 (86%). 3 overdue. 3 overdue actions. 3 gate criteria unmet.</div><div class="recs"><div class="rec">⏰ Most overdue: "Check Subscription status with Telegram " — due 2026-10-16</div><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card green">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card green">
 <div class="ch"><div><div class="cn">RM04 - Sim Verification Campaign</div><div class="cc">RMSVC · H.E. Chea Sereyvath</div></div><div class="cb green">Healthy</div></div>
 <div class="cm"><div class="m"><div class="mn">9</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">7</div><div class="ml">Done</div></div><div class="m overdue"><div class="mn">1</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf green" style="width:78%"></div></div>
 <div class="think">💭 RM04 - Sim Verification Campaign (RMSVC) is on track. Tasks: 7/9 (78%). 1 overdue. 1 overdue actions. 3 gate criteria unmet.</div><div class="recs"><div class="rec">⏰ Most overdue: "Remind boss meeting with bank NBC" — due 2026-10-20</div><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card none">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card none">
 <div class="ch"><div><div class="cn">RM19 - DGC Activities</div><div class="cc">RMDGACT · Unassigned</div></div><div class="cb none">Idle</div></div>
 <div class="cm"><div class="m"><div class="mn">0</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">0</div><div class="ml">Done</div></div><div class="m "><div class="mn">0</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf none" style="width:0%"></div></div>
 <div class="think">💭 RM19 - DGC Activities (RMDGACT) has no active work. 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card none">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card none">
 <div class="ch"><div><div class="cn">RM06 - Logistic EA</div><div class="cc">RMDGP · Chea Langda</div></div><div class="cb none">Idle</div></div>
 <div class="cm"><div class="m"><div class="mn">0</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">0</div><div class="ml">Done</div></div><div class="m "><div class="mn">0</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf none" style="width:0%"></div></div>
 <div class="think">💭 RM06 - Logistic EA (RMDGP) has no active work. 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card none">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card none">
 <div class="ch"><div><div class="cn">RM18 - DGP - Flow</div><div class="cc">RMFLOW · Unassigned</div></div><div class="cb none">Idle</div></div>
 <div class="cm"><div class="m"><div class="mn">0</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">0</div><div class="ml">Done</div></div><div class="m "><div class="mn">0</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf none" style="width:0%"></div></div>
 <div class="think">💭 RM18 - DGP - Flow (RMFLOW) has no active work. 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card none">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card none">
 <div class="ch"><div><div class="cn">RM17 - DGP - FormKH</div><div class="cc">RMFORM · Unassigned</div></div><div class="cb none">Idle</div></div>
 <div class="cm"><div class="m"><div class="mn">0</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">0</div><div class="ml">Done</div></div><div class="m "><div class="mn">0</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf none" style="width:0%"></div></div>
 <div class="think">💭 RM17 - DGP - FormKH (RMFORM) has no active work. 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card none">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card none">
 <div class="ch"><div><div class="cn">RM16 - DGP - GO.gov.kh</div><div class="cc">RMGO · Unassigned</div></div><div class="cb none">Idle</div></div>
 <div class="cm"><div class="m"><div class="mn">0</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">0</div><div class="ml">Done</div></div><div class="m "><div class="mn">0</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf none" style="width:0%"></div></div>
 <div class="think">💭 RM16 - DGP - GO.gov.kh (RMGO) has no active work. 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card none">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card none">
 <div class="ch"><div><div class="cn">RM15 - DGP - Sarika</div><div class="cc">RMSAR · Unassigned</div></div><div class="cb none">Idle</div></div>
 <div class="cm"><div class="m"><div class="mn">0</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">0</div><div class="ml">Done</div></div><div class="m "><div class="mn">0</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf none" style="width:0%"></div></div>
 <div class="think">💭 RM15 - DGP - Sarika (RMSAR) has no active work. 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card none">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card none">
 <div class="ch"><div><div class="cn">RM12 - Skai Framework</div><div class="cc">RMSKAI · H.E. Chanty Sothy</div></div><div class="cb none">Idle</div></div>
 <div class="cm"><div class="m"><div class="mn">0</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">0</div><div class="ml">Done</div></div><div class="m "><div class="mn">0</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf none" style="width:0%"></div></div>
 <div class="think">💭 RM12 - Skai Framework (RMSKAI) has no active work. 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card none">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card none">
 <div class="ch"><div><div class="cn">RM07 - Telco EA</div><div class="cc">RMTEL · Unassigned</div></div><div class="cb none">Idle</div></div>
 <div class="cm"><div class="m"><div class="mn">0</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">0</div><div class="ml">Done</div></div><div class="m "><div class="mn">0</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf none" style="width:0%"></div></div>
 <div class="think">💭 RM07 - Telco EA (RMTEL) has no active work. 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div><div class="card none">
+<div class="ls">Last scan: 2026-10-24T10:32</div></div><div class="card none">
 <div class="ch"><div><div class="cn">RM21 - Talent Management</div><div class="cc">RMTM · Sok Maria</div></div><div class="cb none">Idle</div></div>
 <div class="cm"><div class="m"><div class="mn">0</div><div class="ml">Tasks</div></div><div class="m"><div class="mn" style="color:var(--g)">0</div><div class="ml">Done</div></div><div class="m "><div class="mn">0</div><div class="ml">Overdue</div></div><div class="m "><div class="mn">0</div><div class="ml">RAID</div></div></div>
 <div class="bar"><div class="bf none" style="width:0%"></div></div>
 <div class="think">💭 RM21 - Talent Management (RMTM) has no active work. 3 gate criteria unmet.</div><div class="recs"><div class="rec">🚦 3 stage gate criteria unmet.</div></div>
-<div class="ls">Last scan: 2026-10-24T10:30</div></div></div>
-<div class="ft">🤖 23 AI agents monitoring 23 roadmaps · Auto-refreshed every 30 min · 10:30 UTC+07:00</div>
-<script>setTimeout(function(){location.reload()},1800000)</script>
+<div class="ls">Last scan: 2026-10-24T10:33</div></div></div>
+<div class="ft">🤖 23 AI agents monitoring 23 roadmaps · Auto-refreshed every 30 min · 10:33 UTC+07:00 · <span id="user-email"></span> <a href="#" id="logout-link" style="color:var(--a);cursor:pointer">Logout</a></div>
+</div>
+
+<script>
+const msalConfig = {
+  auth: {
+    clientId: "f48bfcda-2382-40ab-8f8a-cfa7f3354b0e",
+    authority: "https://login.microsoftonline.com/12c3d3e1-bf57-4fcf-8b2e-3b4626602444",
+    redirectUri: "https://vithuroathvun.github.io/dgc-pmo-dashboard/"
+  },
+  cache: { cacheLocation: "localStorage" }
+};
+const msalInstance = new msal.PublicClientApplication(msalConfig);
+const ALLOWED_EMAILS = ["v.vithuroath@dgc.gov.kh"];
+
+async function init() {
+  try {
+    await msalInstance.initialize();
+    const resp = await msalInstance.handleRedirectPromise();
+    if (resp && resp.account) {
+      msalInstance.setActiveAccount(resp.account);
+      checkAccess(resp.account);
+    } else {
+      const accounts = msalInstance.getAllAccounts();
+      if (accounts.length > 0) {
+        msalInstance.setActiveAccount(accounts[0]);
+        checkAccess(accounts[0]);
+      } else {
+        document.getElementById("login-screen").style.display = "flex";
+      }
+    }
+  } catch(e) {
+    document.getElementById("login-error").textContent = "Auth error: " + e.message;
+    document.getElementById("login-screen").style.display = "flex";
+    document.getElementById("loading").style.display = "none";
+  }
+}
+
+function login() {
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("loading").style.display = "flex";
+  const req = {
+    scopes: ["User.Read"],
+    prompt: "select_account"
+  };
+  msalInstance.loginRedirect(req);
+}
+
+function checkAccess(account) {
+  const email = account.username.toLowerCase();
+  if (!ALLOWED_EMAILS.includes(email)) {
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("login-screen").style.display = "flex";
+    document.getElementById("login-error").textContent = "Access denied. This dashboard is restricted. Your account (" + email + ") is not authorized.";
+    msalInstance.logoutRedirect();
+    return;
+  }
+  document.getElementById("loading").style.display = "none";
+  document.getElementById("login-screen").style.display = "none";
+  document.getElementById("dashboard").style.display = "block";
+  document.getElementById("user-email").textContent = "· " + email;
+  setTimeout(function(){location.reload()},1800000);
+}
+
+document.getElementById("logout-link")?.addEventListener("click", function(e) {
+  e.preventDefault();
+  msalInstance.logoutRedirect();
+});
+
+init();
+</script>
 </body></html>
